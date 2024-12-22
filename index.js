@@ -4,7 +4,7 @@ import userRouter from './roots/userRoute.js';  // Your user routes
 import galleryitemrouter from './roots/galleryitemroute.js';  // Your gallery routes
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken'; 
-
+import categoryRouter from './roots/categoryRoute.js';
 
 
 const app = express();
@@ -42,6 +42,7 @@ app.use((req, res, next) => {
 // Your routes
 app.use('/api/users', userRouter);  // Protect user routes with JWT middleware
 app.use('/api/gallery', galleryitemrouter);  // You can protect gallery routes too if needed
+app.use("/api/category", categoryRouter); // You can protect category routes
 
 // Database connection string
 const connectionstring = "mongodb+srv://tester:123@cluster0.kiuyf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
