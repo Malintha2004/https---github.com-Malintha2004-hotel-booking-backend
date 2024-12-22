@@ -2,6 +2,8 @@
 import User from "../models/user.js"; // Correct import of the User model
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import dotenv from  "dotenv"
+dotenv.config()
 
 // Get all users
 export function getusers(req, res) {
@@ -94,7 +96,7 @@ export function loginuser(req, res) {
                 }
 
                 // If passwords match, generate a JWT token
-                const token = jwt.sign({ userId: user._id }, "secret", { expiresIn: "1h" });
+                const token = jwt.sign({ userId: user._id },process.env.JWT_KEY, { expiresIn: "1h" });
 
                 // Send success response with user data and JWT token
                 res.json({

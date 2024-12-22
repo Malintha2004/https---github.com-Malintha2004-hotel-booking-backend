@@ -5,7 +5,9 @@ import galleryitemrouter from './roots/galleryitemroute.js';  // Your gallery ro
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken'; 
 import categoryRouter from './roots/categoryRoute.js';
+import dotenv from "dotenv";
 
+dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,7 +24,7 @@ app.use((req, res, next) => {
 
     if (token) {
         // Validate the token
-        jwt.verify(token, "secret", (err, decoded) => {
+        jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
             if (err) {
                 if (err.name === 'TokenExpiredError') {
                     return res.status(401).json({ message: "Token expired, please log in again" });
@@ -45,7 +47,7 @@ app.use('/api/gallery', galleryitemrouter);  // You can protect gallery routes t
 app.use("/api/category", categoryRouter); // You can protect category routes
 
 // Database connection string
-const connectionstring = "mongodb+srv://tester:123@cluster0.kiuyf.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const connectionstring = process.env.MONGO_URL;
 mongoose.connect(connectionstring)
     .then(() => {
         console.log("Connected to the database");
