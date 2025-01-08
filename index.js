@@ -7,14 +7,14 @@ import jwt from 'jsonwebtoken';
 import categoryRouter from './roots/categoryRoute.js';
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config();  // Load environment variables from a .env file
 
 const app = express();
-app.use(bodyParser.json());
+app.use(bodyParser.json());  // Parse incoming requests with JSON payloads
 
 // JWT Middleware - Verify token for all routes except /api/users/login
 app.use((req, res, next) => {
-    // Skip JWT validation for login route
+    // Skip JWT validation for login route (only this route is excluded)
     if (req.url === '/api/users/login') {
         return next();  // Proceed without token validation for login
     }
@@ -22,41 +22,45 @@ app.use((req, res, next) => {
     // Extract token from authorization header
     const token = req.header("authorization") ? req.header("authorization").replace("Bearer ", "") : null;
 
-    if (token) {
-        // Validate the token
-        jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
-            if (err) {
-                if (err.name === 'TokenExpiredError') {
-                    return res.status(401).json({ message: "Token expired, please log in again" });
-                }
-                return res.status(401).json({ message: "Invalid token", error: err.message });
-            }
-
-            req.user = decoded; // Attach the decoded token to the request object
-            console.log('Token decoded:', decoded);
-            next();  // Continue to the next middleware or route
-        });
-    } else {
-        return res.status(401).json({ message: "No token provided" });  // Return 401 if no token is provided
+    // If no token is provided, return an error
+    if (!token) {
+        return res.status(401).json({ message: "No token provided" });
     }
+
+    // Validate the token
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+        if (err) {
+            // Handle different JWT errors
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ message: "Token expired, please log in again" });
+            }
+            return res.status(401).json({ message: "Invalid token", error: err.message });
+        }
+
+        // Attach decoded token to the request object for use in routes
+        req.user = decoded;
+        console.log('Token decoded:', decoded);  // Optional: Log the decoded token for debugging purposes
+        next();  // Continue to the next middleware or route
+    });
 });
 
-// Your routes
-app.use('/api/users', userRouter);  // Protect user routes with JWT middleware
-app.use('/api/gallery', galleryitemrouter);  // You can protect gallery routes too if needed
-app.use("/api/category", categoryRouter); // You can protect category routes
+// Define your routes
+app.use('/api/users', userRouter);       // User routes (login, etc.)
+app.use('/api/gallery', galleryitemrouter); // Gallery routes (optional protection)
+app.use('/api/category', categoryRouter);  // Category routes (protected)
 
 // Database connection string
-const connectionstring = process.env.MONGO_URL;
-mongoose.connect(connectionstring)
+const connectionString = process.env.MONGO_URL;
+mongoose.connect(connectionString)
     .then(() => {
         console.log("Connected to the database");
     })
-    .catch(() => {
-        console.log("Connection failed");
+    .catch((err) => {
+        console.error("Connection failed", err);
     });
 
 // Start the server
-app.listen(5000, () => {
-    console.log('Server is running on port 5000');
+const PORT = process.env.PORT || 5000;  // Use the PORT from environment or default to 5000
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

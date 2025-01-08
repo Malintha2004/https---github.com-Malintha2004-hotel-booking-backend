@@ -1,9 +1,8 @@
-
 import User from "../models/user.js"; // Correct import of the User model
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import dotenv from  "dotenv"
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 
 // Get all users
 export function getusers(req, res) {
@@ -23,15 +22,16 @@ export function getusers(req, res) {
 
 // Create a new user
 export function postusers(req, res) {
-    
-    const user =req.body;
+    const userData = req.body;
 
-    const password = req.body.password;
-    const passwordhash = bcrypt.hashSync(password,10);
-    user.password = passwordhash
-    
-    const userData = req.body; // Changed variable name to avoid conflict with the model name
-    const newUser = new User(userData); // Use 'User' instead of 'user' to reference the model
+    // Hash the user's password before saving
+    const password = userData.password;
+    const passwordHash = bcrypt.hashSync(password, 10);
+    userData.password = passwordHash; // Updating password with hashed value
+
+    // Create a new user instance
+    const newUser = new User(userData);
+
     newUser.save()
         .then(() => {
             res.status(201).json({
@@ -50,7 +50,8 @@ export function postusers(req, res) {
 // Delete a user
 export function deleteusers(req, res) {
     const email = req.body.email;
-    User.deleteOne({ email: email }) // Corrected to `deleteOne` instead of `delete`
+
+    User.deleteOne({ email: email })
         .then(() => {
             res.json({
                 message: "User deleted successfully"
@@ -71,6 +72,7 @@ export function putusers(req, res) {
     });
 }
 
+// Login user and generate a JWT token
 export function loginuser(req, res) {
     const { email, password } = req.body;
 
@@ -95,8 +97,12 @@ export function loginuser(req, res) {
                     return res.status(400).json({ message: "Invalid credentials" });
                 }
 
-                // If passwords match, generate a JWT token
-                const token = jwt.sign({ userId: user._id },process.env.JWT_KEY, { expiresIn: "1h" });
+                // If passwords match, generate a JWT token with userId and user type (admin or customer)
+                const token = jwt.sign(
+                    { userId: user._id, type: user.type }, // Added user type in the JWT payload
+                    process.env.JWT_KEY,
+                    { expiresIn: "1h" }
+                );
 
                 // Send success response with user data and JWT token
                 res.json({
@@ -113,5 +119,3 @@ export function loginuser(req, res) {
             });
         });
 }
-
-
